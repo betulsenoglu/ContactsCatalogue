@@ -1,0 +1,51 @@
+version: "3"
+
+networks:
+    users.api-dev:
+        driver: bridge
+
+services:
+    users.api:
+        image: users.api
+        depends_on:
+            - "postgres_image"
+            - "redis_image"
+        build:
+            context: "."
+            dockerfile: Dockerfile
+        ports:
+            - "5002:5001"
+
+        links:
+            - "redis_image"
+        environment:
+            DB_CONNECTION_STRING: "host:postgres_image;port=5432;database=contactscatalogue;username=admin;password=123456"
+        networks:
+            - users.api-dev
+
+
+    postgres_image:
+        image: postgres:latest
+        restart: always
+        ports:
+            - "5432:5432"
+        restart: always
+        volumes:
+            - db_volume:/var/lib/postgresql/data
+        environment:
+            POSTGRES_USER: "admin"
+            POSTGRES_PASSWORD: "123456"
+            POSTGRES_DB: "contactscatalogue"
+        networks:
+            - users.api-dev
+
+    redis_image:
+        image: redis
+        container_name: redis.cache
+        ports:
+            - "6379:6379"
+        networks:
+            - users.api-dev
+
+volumes:
+    db_volume:
